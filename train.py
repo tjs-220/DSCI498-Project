@@ -26,6 +26,7 @@ def train(cfg):
     diffusion = DiffusionSchedule(cfg)
     model = UNet(cfg).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
+    loss_history = []
 
     for epoch in range(1, cfg.num_epochs + 1):
         model.train()
@@ -40,8 +41,11 @@ def train(cfg):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            loss_history.append(loss.item())
 
             pbar.set_postfix({"loss": loss.item()})
+        
+        torch.save(loss_history, os.path.join(cfg.output_dir, "loss_history.pt"))
 
         if epoch % cfg.ckpt_every == 0:
             torch.save(model.state_dict(), os.path.join(cfg.output_dir, f"model_epoch_{epoch}.pt"))
